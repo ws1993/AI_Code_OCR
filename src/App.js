@@ -9,11 +9,15 @@ import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-java';
 import 'prismjs/components/prism-typescript';
 import 'prismjs/themes/prism.css';
+import ReactMarkdown from 'react-markdown'; // 新增：用于渲染报告md
 
 function App() {
+  // 优先从localStorage读取配置
   const [DEFAULT_PROMPT, setDefaultPrompt] = useState('');
-  const [prompt, setPrompt] = useState('');
-  const [baseUrl, setBaseUrl] = useState('');
+  const [prompt, setPrompt] = useState(() => localStorage.getItem('prompt') || '');
+  const [baseUrl, setBaseUrl] = useState(() => localStorage.getItem('baseUrl') || '');
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('apiKey') || '');
+  const [model, setModel] = useState(() => localStorage.getItem('model') || '');
 
   useEffect(() => {
     fetch(require('./prompt.md'))
@@ -24,6 +28,20 @@ function App() {
   useEffect(() => {
     if (DEFAULT_PROMPT && !prompt) setPrompt(DEFAULT_PROMPT);
   }, [DEFAULT_PROMPT]);
+
+  // 自动保存配置到localStorage
+  useEffect(() => {
+    localStorage.setItem('prompt', prompt);
+  }, [prompt]);
+  useEffect(() => {
+    localStorage.setItem('baseUrl', baseUrl);
+  }, [baseUrl]);
+  useEffect(() => {
+    localStorage.setItem('apiKey', apiKey);
+  }, [apiKey]);
+  useEffect(() => {
+    localStorage.setItem('model', model);
+  }, [model]);
 
   return (
     <Routes>
@@ -36,6 +54,10 @@ function App() {
             DEFAULT_PROMPT={DEFAULT_PROMPT}
             prompt={prompt}
             setPrompt={setPrompt}
+            apiKey={apiKey}
+            setApiKey={setApiKey}
+            model={model}
+            setModel={setModel}
           />
         }
       />
@@ -48,6 +70,10 @@ function App() {
             DEFAULT_PROMPT={DEFAULT_PROMPT}
             prompt={prompt}
             setPrompt={setPrompt}
+            apiKey={apiKey}
+            setApiKey={setApiKey}
+            model={model}
+            setModel={setModel}
           />
         }
       />
@@ -55,15 +81,20 @@ function App() {
   );
 }
 
-// 定义AppContent组件（提升到App函数之前）
-const AppContent = ({ baseUrl, setBaseUrl, DEFAULT_PROMPT, prompt, setPrompt }) => {
+// AppContent和ConfigModal参数补充
+const AppContent = ({
+  baseUrl, setBaseUrl,
+  DEFAULT_PROMPT, prompt, setPrompt,
+  apiKey, setApiKey,
+  model, setModel
+}) => {
   // 状态管理
   const [files, setFiles] = useState([]);
   const [ocrResult, setOcrResult] = useState('');
+  const [report, setReport] = useState('');
+  const [codeBlock, setCodeBlock] = useState('');
   const [language, setLanguage] = useState('javascript');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [apiKey, setApiKey] = useState('');
-  const [model, setModel] = useState('');
   // 新增弹窗显示状态
   const [showConfig, setShowConfig] = useState(false);
 
@@ -130,7 +161,14 @@ const AppContent = ({ baseUrl, setBaseUrl, DEFAULT_PROMPT, prompt, setPrompt }) 
 
       const data = await response.json();
       if (response.ok) {
-        setOcrResult(data.choices?.[0]?.message?.content || '识别失败');
+        const content = data.choices?.[0]?.message?.content || '识别失败';
+        // 提取代码块
+        const codeMatch = content.match(/```(\w+)?\s*([\s\S]*?)```/);
+        setCodeBlock(codeMatch ? codeMatch[2] : '');
+        // 提取报告部分
+        const reportMatch = content.replace(/```[\s\S]*?```/, '').trim();
+        setReport(reportMatch);
+        setOcrResult(content);
       } else {
         throw new Error(data.error?.message || 'OCR处理失败');
       }
@@ -272,9 +310,28 @@ const AppContent = ({ baseUrl, setBaseUrl, DEFAULT_PROMPT, prompt, setPrompt }) 
           </button>
         </div>
 
-        {/* 识别结果 */}
+        {/* 识别结果分区 */}
         <div style={{ marginBottom: '32px' }}>
-          <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>识别结果</h2>
+          <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>识别报告</h2>
+          <div style={{ border: '1px solid #d1d5db', borderRadius: '8px', padding: '12px', background: '#f9fafb', minHeight: '60px', color: '#374151', marginBottom: '24px' }}>
+            {report ? (
+              <ReactMarkdown
+                children={report}
+                components={{
+                  h1: ({node, ...props}) => <h3 style={{color:'#2563eb', fontSize:'18px', margin:'8px 0'}} {...props} />,
+                  h2: ({node, ...props}) => <h4 style={{color:'#2563eb', fontSize:'16px', margin:'6px 0'}} {...props} />,
+                  ul: ({node, ...props}) => <ul style={{paddingLeft:'20px', margin:'6px 0'}} {...props} />,
+                  li: ({node, ...props}) => <li style={{marginBottom:'2px'}} {...props} />,
+                  p: ({node, ...props}) => <p style={{margin:'4px 0'}} {...props} />,
+                  code: ({node, ...props}) => <code style={{background:'#e5e7eb', borderRadius:'4px', padding:'2px 4px'}} {...props} />,
+                  table: ({node, ...props}) => <table style={{borderCollapse:'collapse', width:'100%'}} {...props} />,
+                  th: ({node, ...props}) => <th style={{border:'1px solid #d1d5db', background:'#f3f4f6', padding:'4px'}} {...props} />,
+                  td: ({node, ...props}) => <td style={{border:'1px solid #d1d5db', padding:'4px'}} {...props} />,
+                }}
+              />
+            ) : <span style={{ color: '#9ca3af' }}>暂无报告</span>}
+          </div>
+          <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>识别代码</h2>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
             <span style={{ marginRight: '12px', color: '#4b5563' }}>选择语言:</span>
             <select
@@ -288,7 +345,7 @@ const AppContent = ({ baseUrl, setBaseUrl, DEFAULT_PROMPT, prompt, setPrompt }) 
               <option value="typescript">TypeScript</option>
             </select>
             <button
-              onClick={() => formatCode(ocrResult)}
+              onClick={() => formatCode(codeBlock)}
               style={{
                 marginLeft: '16px',
                 padding: '8px 16px',
@@ -304,8 +361,8 @@ const AppContent = ({ baseUrl, setBaseUrl, DEFAULT_PROMPT, prompt, setPrompt }) 
           </div>
           <div style={{ border: '1px solid #d1d5db', borderRadius: '8px', overflow: 'hidden' }}>
             <Editor
-              value={ocrResult}
-              onValueChange={code => setOcrResult(code)}
+              value={codeBlock}
+              onValueChange={code => setCodeBlock(code)}
               highlight={highlightCode}
               padding={10}
               style={{
