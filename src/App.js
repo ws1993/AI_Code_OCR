@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { useDropzone } from 'react-dropzone';
 import Editor from 'react-simple-code-editor';
@@ -10,8 +10,53 @@ import 'prismjs/components/prism-java';
 import 'prismjs/components/prism-typescript';
 import 'prismjs/themes/prism.css';
 
+function App() {
+  const [DEFAULT_PROMPT, setDefaultPrompt] = useState('');
+  const [prompt, setPrompt] = useState('');
+  const [baseUrl, setBaseUrl] = useState('');
+
+  useEffect(() => {
+    fetch(require('./prompt.md'))
+      .then(res => res.text())
+      .then(text => setDefaultPrompt(text));
+  }, []);
+
+  useEffect(() => {
+    if (DEFAULT_PROMPT && !prompt) setPrompt(DEFAULT_PROMPT);
+  }, [DEFAULT_PROMPT]);
+
+  return (
+    <Routes>
+      <Route
+        path="/"
+        element={
+          <AppContent
+            baseUrl={baseUrl}
+            setBaseUrl={setBaseUrl}
+            DEFAULT_PROMPT={DEFAULT_PROMPT}
+            prompt={prompt}
+            setPrompt={setPrompt}
+          />
+        }
+      />
+      <Route
+        path="*"
+        element={
+          <AppContent
+            baseUrl={baseUrl}
+            setBaseUrl={setBaseUrl}
+            DEFAULT_PROMPT={DEFAULT_PROMPT}
+            prompt={prompt}
+            setPrompt={setPrompt}
+          />
+        }
+      />
+    </Routes>
+  );
+}
+
 // 定义AppContent组件（提升到App函数之前）
-const AppContent = ({ baseUrl, setBaseUrl }) => {
+const AppContent = ({ baseUrl, setBaseUrl, DEFAULT_PROMPT, prompt, setPrompt }) => {
   // 状态管理
   const [files, setFiles] = useState([]);
   const [ocrResult, setOcrResult] = useState('');
@@ -19,7 +64,8 @@ const AppContent = ({ baseUrl, setBaseUrl }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [apiKey, setApiKey] = useState('');
   const [model, setModel] = useState('');
-  const [prompt, setPrompt] = useState('');
+  // 新增弹窗显示状态
+  const [showConfig, setShowConfig] = useState(false);
 
   // 处理文件上传
   const onDrop = useCallback((acceptedFiles) => {
@@ -143,7 +189,47 @@ const AppContent = ({ baseUrl, setBaseUrl }) => {
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6', padding: '32px 16px' }}>
+    <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6', padding: '32px 16px', position: 'relative' }}>
+      {/* 右上角齿轮图标入口 */}
+      <div style={{
+        position: 'absolute',
+        top: 32,
+        right: 32,
+        zIndex: 100,
+        cursor: 'pointer',
+        display: 'flex',
+        alignItems: 'center'
+      }}
+        onClick={() => setShowConfig(true)}
+        title="配置"
+      >
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#374151" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="3" />
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.09a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+        </svg>
+        <span style={{
+          marginLeft: 8,
+          color: '#374151',
+          fontSize: 16,
+          fontWeight: 500,
+          userSelect: 'none'
+        }}>配置</span>
+      </div>
+      {/* 配置弹窗 */}
+      <ConfigModal
+        visible={showConfig}
+        onClose={() => setShowConfig(false)}
+        baseUrl={baseUrl}
+        setBaseUrl={setBaseUrl}
+        apiKey={apiKey}
+        setApiKey={setApiKey}
+        model={model}
+        setModel={setModel}
+        prompt={prompt}
+        setPrompt={setPrompt}
+        validateConfig={validateConfig}
+        DEFAULT_PROMPT={DEFAULT_PROMPT}
+      />
       <div style={{ maxWidth: '896px', margin: '0 auto', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', padding: '24px' }}>
         <h1 style={{ fontSize: '30px', fontWeight: 'bold', color: '#1f2937', marginBottom: '24px' }}>代码OCR识别工具</h1>
 
@@ -230,90 +316,146 @@ const AppContent = ({ baseUrl, setBaseUrl }) => {
             />
           </div>
         </div>
-
-        {/* AI配置 */}
-        <div>
-          <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>AI配置</h2>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
-            <div>
-              <label style={{ display: 'block', color: '#374151', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
-                Base URL
-              </label>
-              <input
-                type="text"
-                value={baseUrl}
-                onChange={(e) => setBaseUrl(e.target.value)}
-                style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: '6px', padding: '8px 12px' }}
-                placeholder="例如: https://api.example.com"
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', color: '#374151', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
-                API Key
-              </label>
-              <input
-                type="password"
-                value={apiKey}
-                onChange={(e) => setApiKey(e.target.value)}
-                style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: '6px', padding: '8px 12px' }}
-                placeholder="输入API密钥"
-              />
-            </div>
-            <div>
-              <label style={{ display: 'block', color: '#374151', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
-                模型名称
-              </label>
-              <input
-                type="text"
-                value={model}
-                onChange={(e) => setModel(e.target.value)}
-                style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: '6px', padding: '8px 12px' }}
-                placeholder="例如: gpt-4-vision-preview"
-              />
-            </div>
-          </div>
-          <div style={{ marginTop: '16px' }}>
-            <label style={{ display: 'block', color: '#374151', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
-              提示词
-            </label>
-            <textarea
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: '6px', padding: '8px 12px' }}
-              placeholder="请识别图片中的代码并转换为文本格式，保持原有的格式和缩进"
-              rows="3"
-            />
-          </div>
-          <button
-            onClick={() => validateConfig()}
-            style={{
-              marginTop: '16px',
-              padding: '8px 16px',
-              backgroundColor: '#059669',
-              color: 'white',
-              borderRadius: '6px',
-              border: 'none',
-              cursor: 'pointer'
-            }}
-          >
-            验证配置
-          </button>
-        </div>
       </div>
     </div>
   );
 }
 
-// 将AppContent移出App函数作用域，并提升到App函数定义之前
-function App() {
-  const [baseUrl, setBaseUrl] = useState('');
-
+// 修改ConfigModal参数和使用
+const ConfigModal = ({
+  visible,
+  onClose,
+  baseUrl,
+  setBaseUrl,
+  apiKey,
+  setApiKey,
+  model,
+  setModel,
+  prompt,
+  setPrompt,
+  validateConfig,
+  DEFAULT_PROMPT
+}) => {
+  if (!visible) return null;
   return (
-    <Routes>
-      <Route path="/" element={<AppContent baseUrl={baseUrl} setBaseUrl={setBaseUrl} />} />
-      <Route path="*" element={<AppContent baseUrl={baseUrl} setBaseUrl={setBaseUrl} />} />
-    </Routes>
+    <div style={{
+      position: 'fixed',
+      top: 0, left: 0, right: 0, bottom: 0,
+      background: 'rgba(0,0,0,0.2)',
+      zIndex: 9999,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    }}>
+      <div style={{
+        background: 'white',
+        borderRadius: '12px',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+        padding: '32px',
+        minWidth: '400px',
+        maxWidth: '90vw',
+        position: 'relative'
+      }}>
+        <button
+          onClick={onClose}
+          style={{
+            position: 'absolute',
+            top: 16,
+            right: 16,
+            background: 'none',
+            border: 'none',
+            fontSize: 22,
+            cursor: 'pointer',
+            color: '#888'
+          }}
+          aria-label="关闭"
+        >×</button>
+        <h2 style={{ fontSize: '22px', fontWeight: '600', color: '#374151', marginBottom: '18px' }}>AI配置</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+          <div>
+            <label style={{ display: 'block', color: '#374151', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
+              Base URL
+            </label>
+            <input
+              type="text"
+              value={baseUrl}
+              onChange={(e) => setBaseUrl(e.target.value)}
+              style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: '6px', padding: '8px 12px' }}
+              placeholder="例如: https://api.example.com"
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', color: '#374151', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
+              API Key
+            </label>
+            <input
+              type="password"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: '6px', padding: '8px 12px' }}
+              placeholder="输入API密钥"
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', color: '#374151', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
+              模型名称
+            </label>
+            <input
+              type="text"
+              value={model}
+              onChange={(e) => setModel(e.target.value)}
+              style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: '6px', padding: '8px 12px' }}
+              placeholder="例如: gpt-4-vision-preview"
+            />
+          </div>
+        </div>
+        <div style={{ marginTop: '16px', position: 'relative' }}>
+          <label style={{ display: 'block', color: '#374151', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
+            提示词 (Markdown格式)
+          </label>
+          <button
+            onClick={() => setPrompt(DEFAULT_PROMPT)}
+            style={{
+              position: 'absolute',
+              top: 0,
+              right: 0,
+              padding: '4px 10px',
+              fontSize: '13px',
+              background: '#e5e7eb',
+              border: 'none',
+              borderRadius: '6px',
+              color: '#374151',
+              cursor: 'pointer'
+            }}
+            title="重置为默认提示词"
+          >
+            使用默认
+          </button>
+          <textarea
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: '6px', padding: '8px 12px', marginTop: '6px', fontFamily: 'monospace' }}
+            placeholder={DEFAULT_PROMPT}
+            rows="10"
+          />
+        </div>
+        <button
+          onClick={() => validateConfig()}
+          style={{
+            marginTop: '16px',
+            padding: '8px 16px',
+            backgroundColor: '#059669',
+            color: 'white',
+            borderRadius: '6px',
+            border: 'none',
+            cursor: 'pointer'
+          }}
+        >
+          验证配置
+        </button>
+      </div>
+    </div>
   );
-}
+};
 
 export default App;
