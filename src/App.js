@@ -114,14 +114,10 @@ const AppContent = ({
     multiple: false
   });
 
-  // 识别按钮点击
+  // 识别按钮点击（去掉识别时的配置验证）
   const handleOcrClick = async () => {
     if (files.length === 0) {
       alert('请先上传图片');
-      return;
-    }
-
-    if (!validateConfig()) {
       return;
     }
 
@@ -162,9 +158,18 @@ const AppContent = ({
       const data = await response.json();
       if (response.ok) {
         const content = data.choices?.[0]?.message?.content || '识别失败';
+        // 自动识别语言
+        let lang = 'javascript';
+        const langMatch = content.match(/```(\w+)/);
+        if (langMatch && langMatch[1]) {
+          lang = langMatch[1].toLowerCase();
+        }
+        setLanguage(lang);
+
         // 提取代码块
         const codeMatch = content.match(/```(\w+)?\s*([\s\S]*?)```/);
         setCodeBlock(codeMatch ? codeMatch[2] : '');
+
         // 提取报告部分
         const reportMatch = content.replace(/```[\s\S]*?```/, '').trim();
         setReport(reportMatch);
@@ -190,26 +195,39 @@ const AppContent = ({
     });
   };
 
-  // 验证AI配置
-  const validateConfig = () => {
+  // 1. AI配置接口验证
+  const validateConfig = async () => {
     if (!apiKey || !baseUrl || !model) {
       alert('请填写完整的AI配置');
       return false;
     }
-    return true;
+    try {
+      // 这里以OpenAI兼容接口为例，实际可根据你的API调整
+      const response = await fetch(`${baseUrl}/v1/models`, {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`
+        }
+      });
+      if (response.ok) {
+        alert('配置验证成功');
+        return true;
+      } else {
+        alert('配置验证失败，请检查API Key和Base URL');
+        return false;
+      }
+    } catch (error) {
+      alert('配置验证异常: ' + error.message);
+      return false;
+    }
   };
 
-  // 格式化代码
+  // 2. 代码格式化修正（保留原有缩进和空行，不做trim）
   const formatCode = (code) => {
     try {
-      const formatted = code
-        .split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0)
-        .join('\n');
-
-      setOcrResult(formatted);
-      return formatted;
+      // 这里只做简单格式化，可根据语言类型调用 prettier 或其他库
+      // 保留原有格式
+      setCodeBlock(code);
+      return code;
     } catch (error) {
       console.error('代码格式化错误:', error);
       return code;
@@ -497,7 +515,7 @@ const ConfigModal = ({
           />
         </div>
         <button
-          onClick={() => validateConfig()}
+          onClick={async () => await validateConfig()}
           style={{
             marginTop: '16px',
             padding: '8px 16px',
