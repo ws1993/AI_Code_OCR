@@ -1,21 +1,25 @@
 import React, { useState, useCallback } from 'react';
-import Dropzone from 'react-dropzone';
-import { Editor } from 'react-simple-code-editor';
-import Prism from 'prismjs';
+import { Routes, Route } from 'react-router-dom';
+import { useDropzone } from 'react-dropzone';
+import Editor from 'react-simple-code-editor';
+import { highlight, languages } from 'prismjs/components/prism-core';
+import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-javascript';
 import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-java';
+import 'prismjs/components/prism-typescript';
+import 'prismjs/themes/prism.css';
 
-function App() {
+// 定义AppContent组件（提升到App函数之前）
+const AppContent = ({ baseUrl, setBaseUrl }) => {
   // 状态管理
   const [files, setFiles] = useState([]);
   const [ocrResult, setOcrResult] = useState('');
   const [language, setLanguage] = useState('javascript');
   const [isProcessing, setIsProcessing] = useState(false);
   const [apiKey, setApiKey] = useState('');
-  const [baseUrl, setBaseUrl] = useState('');
   const [model, setModel] = useState('');
-  const [prompt, setPrompt] = useState(''); // 新增：添加提示词状态
+  const [prompt, setPrompt] = useState('');
 
   // 处理文件上传
   const onDrop = useCallback((acceptedFiles) => {
@@ -24,14 +28,32 @@ function App() {
     }
   }, []);
 
+  // 使用 useDropzone hook
+  const { getRootProps, getInputProps } = useDropzone({
+    onDrop,
+    accept: {
+      'image/*': ['.jpeg', '.jpg', '.png']
+    },
+    multiple: false
+  });
+
   // 识别按钮点击
   const handleOcrClick = async () => {
     if (files.length === 0) {
       alert('请先上传图片');
       return;
     }
+
+    if (!validateConfig()) {
+      return;
+    }
+
     setIsProcessing(true);
     try {
+      // 将图片转换为 base64
+      const file = files[0];
+      const base64 = await fileToBase64(file);
+
       const response = await fetch(`${baseUrl}/v1/chat/completions`, {
         method: 'POST',
         headers: {
@@ -40,15 +62,31 @@ function App() {
         },
         body: JSON.stringify({
           model: model,
-          prompt: prompt,
-          image: files[0] // 假设文件已正确处理
+          messages: [
+            {
+              role: "user",
+              content: [
+                {
+                  type: "text",
+                  text: prompt || "请识别图片中的代码并转换为文本格式"
+                },
+                {
+                  type: "image_url",
+                  image_url: {
+                    url: base64
+                  }
+                }
+              ]
+            }
+          ]
         })
       });
+
       const data = await response.json();
       if (response.ok) {
-        setOcrResult(data.result);
+        setOcrResult(data.choices?.[0]?.message?.content || '识别失败');
       } else {
-        throw new Error(data.message || 'OCR处理失败');
+        throw new Error(data.error?.message || 'OCR处理失败');
       }
     } catch (error) {
       console.error('OCR处理错误:', error);
@@ -58,26 +96,20 @@ function App() {
     }
   };
 
+  // 添加文件转 base64 的辅助函数
+  const fileToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+    });
+  };
+
   // 验证AI配置
   const validateConfig = () => {
     if (!apiKey || !baseUrl || !model) {
       alert('请填写完整的AI配置');
-      return false;
-    }
-    // 额外验证：检查API Key是否有效（模拟）
-    if (!apiKey.startsWith('sk-')) {
-      alert('API Key格式不正确');
-      return false;
-    }
-    // 额外验证：检查BaseUrl格式
-    if (!baseUrl) {
-      alert('请输入有效的BaseUrl');
-      return false;
-    }
-    // 额外验证：检查模型名称
-    const validModels = ['gpt-4', 'claude-2', 'llama-2'];
-    if (!validModels.includes(model)) {
-      alert('请选择有效的模型名称');
       return false;
     }
     return true;
@@ -85,173 +117,202 @@ function App() {
 
   // 格式化代码
   const formatCode = (code) => {
-    const prettier = require('prettier');
-    
-    // 根据选择的语言设置格式化选项
-    let options = {
-      parser: language,
-      printWidth: 80,
-      tabWidth: 2,
-      singleQuote: false,
-      trailingComma: 'es5',
-      bracketSpacing: true,
-      jsxBracketSameLine: false,
-      arrowFunction: true,
-      templateStringsQuotes: 'double'
-    };
-    
     try {
-      return prettier.format(code, options);
+      const formatted = code
+        .split('\n')
+        .map(line => line.trim())
+        .filter(line => line.length > 0)
+        .join('\n');
+
+      setOcrResult(formatted);
+      return formatted;
     } catch (error) {
       console.error('代码格式化错误:', error);
-      return code; // 出错时返回原代码
+      return code;
+    }
+  };
+
+  // 代码高亮函数
+  const highlightCode = (code) => {
+    try {
+      return highlight(code, languages[language] || languages.js, language);
+    } catch (error) {
+      console.error('代码高亮错误:', error);
+      return code;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 py-8 px-4">
-      <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-md overflow-hidden p-6">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">代码OCR识别工具</h1>
-        
+    <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6', padding: '32px 16px' }}>
+      <div style={{ maxWidth: '896px', margin: '0 auto', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', padding: '24px' }}>
+        <h1 style={{ fontSize: '30px', fontWeight: 'bold', color: '#1f2937', marginBottom: '24px' }}>代码OCR识别工具</h1>
+
         {/* 文件上传区域 */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-700 mb-3">上传图片</h2>
-          <Dropzone onDrop={onDrop}>
-            {({ getRootProps, getInputProps }) => (
-              <div {...getRootProps()} className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:bg-gray-50 transition-colors">
-                <input {...getInputProps()} />
-                <div className="flex flex-col items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                  </svg>
-                  <p className="text-gray-600">拖拽图片到这里，或者点击选择文件</p>
-                  <p className="text-sm text-gray-500 mt-1">(支持JPG, PNG格式)</p>
-                </div>
-              </div>
-            )}
-          </Dropzone>
+        <div style={{ marginBottom: '32px' }}>
+          <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>上传图片</h2>
+          <div {...getRootProps()} style={{ border: '2px dashed #d1d5db', borderRadius: '8px', padding: '24px', textAlign: 'center', cursor: 'pointer', backgroundColor: '#f9fafb' }}>
+            <input {...getInputProps()} />
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+              <svg style={{ height: '48px', width: '48px', color: '#9ca3af', marginBottom: '8px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+              </svg>
+              <p style={{ color: '#4b5563' }}>拖拽图片到这里，或者点击选择文件</p>
+              <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>(支持JPG, PNG格式)</p>
+            </div>
+          </div>
           {files.length > 0 && (
-            <div className="mt-3">
-              <p className="text-sm text-gray-600">已选择: {files[0].name}</p>
+            <div style={{ marginTop: '12px' }}>
+              <p style={{ fontSize: '14px', color: '#4b5563' }}>已选择: {files[0].name}</p>
             </div>
           )}
         </div>
 
         {/* OCR按钮 */}
-        <div className="flex justify-center mb-8">
-          <button 
-            onClick={handleOcrClick} 
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
+          <button
+            onClick={handleOcrClick}
             disabled={files.length === 0 || isProcessing}
-            className={`px-6 py-3 rounded-lg font-medium ${files.length === 0 || isProcessing ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} text-white transition-colors`}
+            style={{
+              padding: '12px 24px',
+              borderRadius: '8px',
+              fontWeight: '500',
+              backgroundColor: files.length === 0 || isProcessing ? '#9ca3af' : '#2563eb',
+              color: 'white',
+              border: 'none',
+              cursor: files.length === 0 || isProcessing ? 'not-allowed' : 'pointer'
+            }}
           >
             {isProcessing ? '正在识别...' : '识别代码'}
           </button>
         </div>
 
         {/* 识别结果 */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-700 mb-3">识别结果</h2>
-          <div className="flex items-center mb-3">
-            <span className="mr-3 text-gray-600">选择语言:</span>
-            <select 
-              value={language} 
+        <div style={{ marginBottom: '32px' }}>
+          <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>识别结果</h2>
+          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+            <span style={{ marginRight: '12px', color: '#4b5563' }}>选择语言:</span>
+            <select
+              value={language}
               onChange={(e) => setLanguage(e.target.value)}
-              className="border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              style={{ border: '1px solid #d1d5db', borderRadius: '6px', padding: '8px 12px' }}
             >
               <option value="javascript">JavaScript</option>
               <option value="python">Python</option>
               <option value="java">Java</option>
               <option value="typescript">TypeScript</option>
             </select>
-            <button 
+            <button
               onClick={() => formatCode(ocrResult)}
-              className="ml-4 px-4 py-2 bg-gray-200 rounded-lg text-gray-700 hover:bg-gray-300 transition-colors"
+              style={{
+                marginLeft: '16px',
+                padding: '8px 16px',
+                backgroundColor: '#e5e7eb',
+                borderRadius: '8px',
+                color: '#374151',
+                border: 'none',
+                cursor: 'pointer'
+              }}
             >
               格式化代码
             </button>
           </div>
-          <div className="border border-gray-300 rounded-lg overflow-hidden">
+          <div style={{ border: '1px solid #d1d5db', borderRadius: '8px', overflow: 'hidden' }}>
             <Editor
               value={ocrResult}
               onValueChange={code => setOcrResult(code)}
-              highlight={code => Prism.highlight(code, Prism.languages[language] || Prism.languages.js, language)}
+              highlight={highlightCode}
               padding={10}
               style={{
                 fontFamily: '"Fira code", "Fira Mono", monospace',
                 fontSize: 14,
                 minHeight: '200px'
               }}
-              className="editor"
             />
           </div>
         </div>
 
         {/* AI配置 */}
         <div>
-          <h2 className="text-xl font-semibold text-gray-700 mb-3">AI配置</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>AI配置</h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '16px' }}>
             <div>
-              <label className="block text-gray-700 text-sm font-medium mb-1" htmlFor="baseUrl">
+              <label style={{ display: 'block', color: '#374151', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
                 Base URL
               </label>
-              <input 
-                id="baseUrl"
-                type="text" 
-                value={baseUrl} 
+              <input
+                type="text"
+                value={baseUrl}
                 onChange={(e) => setBaseUrl(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="例如: https://api.example.com/v1"
+                style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: '6px', padding: '8px 12px' }}
+                placeholder="例如: https://api.example.com"
               />
             </div>
             <div>
-              <label className="block text-gray-700 text-sm font-medium mb-1" htmlFor="apiKey">
+              <label style={{ display: 'block', color: '#374151', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
                 API Key
               </label>
-              <input 
-                id="apiKey"
-                type="password" 
-                value={apiKey} 
+              <input
+                type="password"
+                value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: '6px', padding: '8px 12px' }}
                 placeholder="输入API密钥"
               />
             </div>
             <div>
-              <label className="block text-gray-700 text-sm font-medium mb-1" htmlFor="model">
+              <label style={{ display: 'block', color: '#374151', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
                 模型名称
               </label>
-              <input 
-                id="model"
-                type="text" 
-                value={model} 
+              <input
+                type="text"
+                value={model}
                 onChange={(e) => setModel(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="例如: gpt-4"
-              />
-            </div>
-            <div>
-              <label className="block text-gray-700 text-sm font-medium mb-1" htmlFor="prompt">
-                提示词
-              </label>
-              <input 
-                id="prompt"
-                type="text" 
-                value={prompt} 
-                onChange={(e) => setPrompt(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="输入提示词"
+                style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: '6px', padding: '8px 12px' }}
+                placeholder="例如: gpt-4-vision-preview"
               />
             </div>
           </div>
-          <button 
+          <div style={{ marginTop: '16px' }}>
+            <label style={{ display: 'block', color: '#374151', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
+              提示词
+            </label>
+            <textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              style={{ width: '100%', border: '1px solid #d1d5db', borderRadius: '6px', padding: '8px 12px' }}
+              placeholder="请识别图片中的代码并转换为文本格式，保持原有的格式和缩进"
+              rows="3"
+            />
+          </div>
+          <button
             onClick={() => validateConfig()}
-            className="mt-4 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+            style={{
+              marginTop: '16px',
+              padding: '8px 16px',
+              backgroundColor: '#059669',
+              color: 'white',
+              borderRadius: '6px',
+              border: 'none',
+              cursor: 'pointer'
+            }}
           >
             验证配置
           </button>
         </div>
       </div>
     </div>
+  );
+}
+
+// 将AppContent移出App函数作用域，并提升到App函数定义之前
+function App() {
+  const [baseUrl, setBaseUrl] = useState('');
+
+  return (
+    <Routes>
+      <Route path="/" element={<AppContent baseUrl={baseUrl} setBaseUrl={setBaseUrl} />} />
+      <Route path="*" element={<AppContent baseUrl={baseUrl} setBaseUrl={setBaseUrl} />} />
+    </Routes>
   );
 }
 
