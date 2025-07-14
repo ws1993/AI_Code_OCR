@@ -10,6 +10,12 @@ import 'prismjs/components/prism-typescript';
 import 'prismjs/themes/prism.css';
 import ReactMarkdown from 'react-markdown';
 import ConfigModal from './ConfigModal';
+import { Select } from 'antd';
+import 'antd/dist/reset.css'; // Ant Design v5推荐用reset.css
+
+const LANGUAGE_OPTIONS = [
+  "javascript", "typescript", "python", "java", "html", "css", "xml", "bash", "c", "cpp", "csharp", "go", "php", "ruby", "swift", "kotlin", "r", "scala", "sql", "perl", "dart", "json", "yaml", "markdown", "powershell", "objectivec", "matlab", "rust", "groovy", "lua", "shell"
+];
 
 const AppContent = ({
   baseUrl, setBaseUrl,
@@ -26,6 +32,7 @@ const AppContent = ({
   const [isProcessing, setIsProcessing] = useState(false);
   // 新增弹窗显示状态
   const [showConfig, setShowConfig] = useState(false);
+  const [languageSearch, setLanguageSearch] = useState('');
 
   // 处理文件上传
   const onDrop = useCallback((acceptedFiles) => {
@@ -173,6 +180,11 @@ const AppContent = ({
     }
   };
 
+  // 过滤语言选项
+  const filteredLanguages = LANGUAGE_OPTIONS.filter(lang =>
+    lang.toLowerCase().includes(languageSearch.toLowerCase())
+  );
+
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6', padding: '32px 16px', position: 'relative' }}>
       {/* 右上角齿轮图标入口 */}
@@ -232,8 +244,23 @@ const AppContent = ({
             </div>
           </div>
           {files.length > 0 && (
-            <div style={{ marginTop: '12px' }}>
-              <p style={{ fontSize: '14px', color: '#4b5563' }}>已选择: {files[0].name}</p>
+            <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center' }}>
+              <p style={{ fontSize: '14px', color: '#4b5563', marginRight: '12px' }}>已选择: {files[0].name}</p>
+              <button
+                onClick={() => setFiles([])}
+                style={{
+                  padding: '4px 10px',
+                  fontSize: '13px',
+                  background: '#ef4444',
+                  border: 'none',
+                  borderRadius: '6px',
+                  color: 'white',
+                  cursor: 'pointer'
+                }}
+                title="删除图片"
+              >
+                删除
+              </button>
             </div>
           )}
         </div>
@@ -281,16 +308,23 @@ const AppContent = ({
           <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>识别代码</h2>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
             <span style={{ marginRight: '12px', color: '#4b5563' }}>选择语言:</span>
-            <select
+            <Select
+              showSearch
               value={language}
-              onChange={(e) => setLanguage(e.target.value)}
-              style={{ border: '1px solid #d1d5db', borderRadius: '6px', padding: '8px 12px' }}
+              placeholder="请选择语言"
+              optionFilterProp="children"
+              onChange={value => setLanguage(value)}
+              filterOption={(input, option) =>
+                option?.children?.toLowerCase().includes(input.toLowerCase())
+              }
+              style={{ minWidth: 180, width: 220 }}
             >
-              <option value="javascript">JavaScript</option>
-              <option value="python">Python</option>
-              <option value="java">Java</option>
-              <option value="typescript">TypeScript</option>
-            </select>
+              {LANGUAGE_OPTIONS.map(lang => (
+                <Select.Option key={lang} value={lang}>
+                  {lang.charAt(0).toUpperCase() + lang.slice(1)}
+                </Select.Option>
+              ))}
+            </Select>
             <button
               onClick={() => formatCode(codeBlock)}
               style={{
