@@ -12,6 +12,8 @@ import ReactMarkdown from 'react-markdown';
 import ConfigModal from './ConfigModal';
 import { Select } from 'antd';
 import 'antd/dist/reset.css'; // Ant Design v5推荐用reset.css
+import UploadImage from './UploadImage';
+import OcrResult from './OcrResult';
 
 const LANGUAGE_OPTIONS = [
   "javascript", "typescript", "python", "java", "html", "css", "xml", "bash", "c", "cpp", "csharp", "go", "php", "ruby", "swift", "kotlin", "r", "scala", "sql", "perl", "dart", "json", "yaml", "markdown", "powershell", "objectivec", "matlab", "rust", "groovy", "lua", "shell"
@@ -304,48 +306,8 @@ const AppContent = ({
       />
       <div style={{ maxWidth: '896px', margin: '0 auto', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', padding: '24px' }}>
         <h1 style={{ fontSize: '30px', fontWeight: 'bold', color: '#1f2937', marginBottom: '24px' }}>代码OCR识别工具</h1>
-
         {/* 文件上传区域 */}
-        <div style={{ marginBottom: '32px' }}>
-          <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>上传图片</h2>
-          <div {...getRootProps()} style={{ border: '2px dashed #d1d5db', borderRadius: '8px', padding: '24px', textAlign: 'center', cursor: 'pointer', backgroundColor: '#f9fafb' }}>
-            <input {...getInputProps()} />
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <svg style={{ height: '48px', width: '48px', color: '#9ca3af', marginBottom: '8px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-              </svg>
-              <p style={{ color: '#4b5563' }}>拖拽图片到这里，或者点击选择文件</p>
-              <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>(支持JPG, PNG格式)</p>
-            </div>
-          </div>
-          {files.length > 0 && (
-            <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center' }}>
-              <div style={{ fontSize: '14px', color: '#4b5563', marginRight: '12px' }}>已选择: {files[0].name}</div>
-              <div
-                onClick={() => setFiles([])}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '12px',
-                  height: '12px',
-                  background: '#ef4444',
-                  borderRadius: '50%',
-                  cursor: 'pointer',
-                  color: 'white',
-                  border: 'none',
-                  marginLeft: '4px'
-                }}
-                title="删除图片"
-              >
-                <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-                  <path d="M4 4L12 12M12 4L4 12" stroke="white" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-              </div>
-            </div>
-          )}
-        </div>
-
+        <UploadImage files={files} setFiles={setFiles} getRootProps={getRootProps} getInputProps={getInputProps} />
         {/* OCR按钮 */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
           <button
@@ -366,75 +328,18 @@ const AppContent = ({
         </div>
 
         {/* 识别结果分区 */}
-        <div style={{ marginBottom: '32px' }}>
-          <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>识别报告</h2>
-          <div style={{ border: '1px solid #d1d5db', borderRadius: '8px', padding: '12px', background: '#f9fafb', minHeight: '60px', color: '#374151', marginBottom: '24px' }}>
-            {report ? (
-              <ReactMarkdown
-                children={report}
-                components={{
-                  h1: ({node, ...props}) => <h3 style={{color:'#2563eb', fontSize:'18px', margin:'8px 0'}} {...props} />,
-                  h2: ({node, ...props}) => <h4 style={{color:'#2563eb', fontSize:'16px', margin:'6px 0'}} {...props} />,
-                  ul: ({node, ...props}) => <ul style={{paddingLeft:'20px', margin:'6px 0'}} {...props} />,
-                  li: ({node, ...props}) => <li style={{marginBottom:'2px'}} {...props} />,
-                  p: ({node, ...props}) => <p style={{margin:'4px 0'}} {...props} />,
-                  code: ({node, ...props}) => <code style={{background:'#e5e7eb', borderRadius:'4px', padding:'2px 4px'}} {...props} />,
-                  table: ({node, ...props}) => <table style={{borderCollapse:'collapse', width:'100%'}} {...props} />,
-                  th: ({node, ...props}) => <th style={{border:'1px solid #d1d5db', background:'#f3f4f6', padding:'4px'}} {...props} />,
-                  td: ({node, ...props}) => <td style={{border:'1px solid #d1d5db', padding:'4px'}} {...props} />,
-                }}
-              />
-            ) : <span style={{ color: '#9ca3af' }}>暂无报告</span>}
-          </div>
-          <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>识别代码</h2>
-          <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
-            <span style={{ marginRight: '12px', color: '#4b5563' }}>选择语言:</span>
-            <Select
-              showSearch
-              value={language}
-              placeholder="请选择语言"
-              optionFilterProp="children"
-              onChange={value => setLanguage(value)}
-              filterOption={(input, option) =>
-                option?.children?.toLowerCase().includes(input.toLowerCase())
-              }
-              style={{ minWidth: 180, width: 220 }}
-            >
-              {LANGUAGE_OPTIONS.map(lang => (
-                <Select.Option key={lang} value={lang}>
-                  {lang.charAt(0).toUpperCase() + lang.slice(1)}
-                </Select.Option>
-              ))}
-            </Select>
-            <button
-              onClick={() => formatCode(codeBlock)}
-              style={{
-                marginLeft: '16px',
-                padding: '8px 16px',
-                backgroundColor: '#e5e7eb',
-                borderRadius: '8px',
-                color: '#374151',
-                border: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              格式化代码
-            </button>
-          </div>
-          <div style={{ border: '1px solid #d1d5db', borderRadius: '8px', overflow: 'hidden' }}>
-            <Editor
-              value={codeBlock}
-              onValueChange={code => setCodeBlock(code)}
-              highlight={highlightCode}
-              padding={10}
-              style={{
-                fontFamily: '"Fira code", "Fira Mono", monospace',
-                fontSize: 14,
-                minHeight: '200px'
-              }}
-            />
-          </div>
-        </div>
+        <OcrResult
+          report={report}
+          codeBlock={codeBlock}
+          language={language}
+          setLanguage={setLanguage}
+          LANGUAGE_OPTIONS={LANGUAGE_OPTIONS}
+          formatCode={formatCode}
+          highlightCode={highlightCode}
+          languageSearch={languageSearch}
+          setLanguageSearch={setLanguageSearch}
+          setCodeBlock={setCodeBlock}
+        />
       </div>
     </div>
   );
