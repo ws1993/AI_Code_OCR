@@ -1,16 +1,13 @@
 import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { highlight, languages } from 'prismjs/components/prism-core';
-import 'prismjs/components/prism-clike';
-import 'prismjs/components/prism-javascript';
-import 'prismjs/components/prism-python';
-import 'prismjs/components/prism-java';
-import 'prismjs/components/prism-typescript';
-import 'prismjs/themes/prism.css';
 import ConfigModal from './ConfigModal';
 import 'antd/dist/reset.css'; // Ant Design v5推荐用reset.css
 import UploadImage from './UploadImage';
 import OcrResult from './OcrResult';
+import fileToBase64 from '../utils/fileToBase64';
+import validateConfig from '../utils/validateConfig';
+import formatCode from '../utils/formatCode';
+import highlightCode from '../utils/highlightCode';
 
 const LANGUAGE_OPTIONS = [
   "javascript", "typescript", "python", "java", "html", "css", "xml", "bash", "c", "cpp", "csharp", "go", "php", "ruby", "swift", "kotlin", "r", "scala", "sql", "perl", "dart", "json", "yaml", "markdown", "powershell", "objectivec", "matlab", "rust", "groovy", "lua", "shell"
@@ -132,140 +129,6 @@ const AppContent = ({
     }
   };
 
-  // 添加文件转 base64 的辅助函数
-  const fileToBase64 = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = error => reject(error);
-    });
-  };
-
-  // 1. AI配置接口验证
-  const validateConfig = async () => {
-    if (!apiKey || !baseUrl || !model) {
-      alert('请填写完整的AI配置');
-      return false;
-    }
-    try {
-      // 这里以OpenAI兼容接口为例，实际可根据你的API调整
-      const response = await fetch(`${baseUrl}/v1/models`, {
-        headers: {
-          'Authorization': `Bearer ${apiKey}`
-        }
-      });
-      if (response.ok) {
-        alert('配置验证成功');
-        return true;
-      } else {
-        alert('配置验证失败，请检查API Key和Base URL');
-        return false;
-      }
-    } catch (error) {
-      alert('配置验证异常: ' + error.message);
-      return false;
-    }
-  };
-
-  // 2. 代码格式化修正（根据语言类型自动格式化，优化分发逻辑）
-  const formatCode = async (code) => {
-    try {
-      let formatted = code;
-      const formatters = {
-        javascript: async (code) => {
-          const prettier = await import('prettier/standalone');
-          const parserBabel = await import('prettier/parser-babel');
-          return prettier.format(code, { parser: 'babel', plugins: [parserBabel] });
-        },
-        typescript: async (code) => {
-          const prettier = await import('prettier/standalone');
-          const parserTypescript = await import('prettier/parser-typescript');
-          return prettier.format(code, { parser: 'typescript', plugins: [parserTypescript] });
-        },
-        json: async (code) => {
-          const prettier = await import('prettier/standalone');
-          const parserBabel = await import('prettier/parser-babel');
-          return prettier.format(code, { parser: 'json', plugins: [parserBabel] });
-        },
-        html: async (code) => {
-          const prettier = await import('prettier/standalone');
-          const parserHtml = await import('prettier/parser-html');
-          return prettier.format(code, { parser: 'html', plugins: [parserHtml] });
-        },
-        css: async (code) => {
-          const prettier = await import('prettier/standalone');
-          const parserCss = await import('prettier/parser-postcss');
-          return prettier.format(code, { parser: 'css', plugins: [parserCss] });
-        },
-        java: async (code) => {
-          const beautify = await import('js-beautify');
-          return beautify.js(code, { indent_size: 2 });
-        },
-        c: async (code) => {
-          const beautify = await import('js-beautify');
-          return beautify.js(code, { indent_size: 2 });
-        },
-        cpp: async (code) => {
-          const beautify = await import('js-beautify');
-          return beautify.js(code, { indent_size: 2 });
-        },
-        csharp: async (code) => {
-          const beautify = await import('js-beautify');
-          return beautify.js(code, { indent_size: 2 });
-        },
-        xml: async (code) => {
-          const beautify = await import('js-beautify');
-          return beautify.html(code, { indent_size: 2 });
-        },
-        python: async (code) => {
-          // 简单格式化：去除行尾空格
-          return code.split('\n').map(line => line.trimEnd()).join('\n');
-        },
-        bash: async (code) => code.split('\n').map(line => line.trimEnd()).join('\n'),
-        shell: async (code) => code.split('\n').map(line => line.trimEnd()).join('\n'),
-        go: async (code) => code.split('\n').map(line => line.trimEnd()).join('\n'),
-        rust: async (code) => code.split('\n').map(line => line.trimEnd()).join('\n'),
-        swift: async (code) => code.split('\n').map(line => line.trimEnd()).join('\n'),
-        kotlin: async (code) => code.split('\n').map(line => line.trimEnd()).join('\n'),
-        php: async (code) => code.split('\n').map(line => line.trimEnd()).join('\n'),
-        ruby: async (code) => code.split('\n').map(line => line.trimEnd()).join('\n'),
-        scala: async (code) => code.split('\n').map(line => line.trimEnd()).join('\n'),
-        perl: async (code) => code.split('\n').map(line => line.trimEnd()).join('\n'),
-        dart: async (code) => code.split('\n').map(line => line.trimEnd()).join('\n'),
-        lua: async (code) => code.split('\n').map(line => line.trimEnd()).join('\n'),
-        groovy: async (code) => code.split('\n').map(line => line.trimEnd()).join('\n'),
-        matlab: async (code) => code.split('\n').map(line => line.trimEnd()).join('\n'),
-        yaml: async (code) => code.trim(),
-        markdown: async (code) => code.trim(),
-        sql: async (code) => code.split('\n').map(line => line.trimEnd()).join('\n'),
-        powershell: async (code) => code.split('\n').map(line => line.trimEnd()).join('\n'),
-        objectivec: async (code) => code.split('\n').map(line => line.trimEnd()).join('\n'),
-        r: async (code) => code.split('\n').map(line => line.trimEnd()).join('\n'),
-      };
-
-      if (formatters[language]) {
-        formatted = await formatters[language](code);
-      }
-      setCodeBlock(formatted);
-      return formatted;
-    } catch (error) {
-      console.error('代码格式化错误:', error);
-      setCodeBlock(code);
-      return code;
-    }
-  };
-
-  // 代码高亮函数
-  const highlightCode = (code) => {
-    try {
-      return highlight(code, languages[language] || languages.js, language);
-    } catch (error) {
-      console.error('代码高亮错误:', error);
-      return code;
-    }
-  };
-
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6', padding: '32px 16px', position: 'relative' }}>
       {/* 右上角齿轮图标入口 */}
@@ -305,7 +168,7 @@ const AppContent = ({
         setModel={setModel}
         prompt={prompt}
         setPrompt={setPrompt}
-        validateConfig={validateConfig}
+        validateConfig={() => validateConfig({ apiKey, baseUrl, model })}
         DEFAULT_PROMPT={DEFAULT_PROMPT}
       />
       <div style={{ maxWidth: '896px', margin: '0 auto', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', padding: '24px' }}>
@@ -345,8 +208,8 @@ const AppContent = ({
           language={language}
           setLanguage={setLanguage}
           LANGUAGE_OPTIONS={LANGUAGE_OPTIONS}
-          formatCode={formatCode}
-          highlightCode={highlightCode}
+          formatCode={(code) => formatCode(code, language, setCodeBlock)}
+          highlightCode={(code) => highlightCode(code, language)}
           languageSearch={languageSearch}
           setLanguageSearch={setLanguageSearch}
           setCodeBlock={setCodeBlock}
