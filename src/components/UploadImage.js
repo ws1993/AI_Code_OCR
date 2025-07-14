@@ -1,6 +1,20 @@
 import React from 'react';
 
-const UploadImage = ({ files, setFiles, getRootProps, getInputProps }) => (
+const ProgressBar = ({ percent }) => (
+  <div style={{ width: '100%', background: '#e5e7eb', borderRadius: '6px', height: '8px', marginTop: '10px' }}>
+    <div
+      style={{
+        width: `${percent}%`,
+        background: '#2563eb',
+        height: '100%',
+        borderRadius: '6px',
+        transition: 'width 0.3s'
+      }}
+    />
+  </div>
+);
+
+const UploadImage = ({ files, setFiles, getRootProps, getInputProps, isProcessing, progress = 0 }) => (
   <div style={{ marginBottom: '32px' }}>
     <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>上传图片</h2>
     <div {...getRootProps()} style={{ border: '2px dashed #d1d5db', borderRadius: '8px', padding: '24px', textAlign: 'center', cursor: 'pointer', backgroundColor: '#f9fafb' }}>
@@ -37,6 +51,14 @@ const UploadImage = ({ files, setFiles, getRootProps, getInputProps }) => (
             <path d="M4 4L12 12M12 4L4 12" stroke="white" strokeWidth="2" strokeLinecap="round"/>
           </svg>
         </div>
+      </div>
+    )}
+    {isProcessing && (
+      <div style={{ marginTop: '18px', textAlign: 'center' }}>
+        <span style={{ color: '#2563eb', fontWeight: 500, fontSize: '15px' }}>
+          正在识别中，请稍候...（{progress}%）
+        </span>
+        <ProgressBar percent={progress} />
       </div>
     )}
   </div>

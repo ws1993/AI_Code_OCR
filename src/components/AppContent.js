@@ -32,6 +32,7 @@ const AppContent = ({
   const [codeBlock, setCodeBlock] = useState('');
   const [language, setLanguage] = useState('javascript');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [progress, setProgress] = useState(0);
   // 新增弹窗显示状态
   const [showConfig, setShowConfig] = useState(false);
   const [languageSearch, setLanguageSearch] = useState('');
@@ -60,8 +61,17 @@ const AppContent = ({
     }
 
     setIsProcessing(true);
+    setProgress(0);
+
     try {
-      // 将图片转换为 base64
+      // 模拟进度条（实际可根据API返回进度调整）
+      let fakeProgress = 0;
+      const timer = setInterval(() => {
+        fakeProgress += Math.floor(Math.random() * 10) + 5;
+        setProgress(Math.min(fakeProgress, 95));
+      }, 300);
+
+      // ...existing OCR fetch logic...
       const file = files[0];
       const base64 = await fileToBase64(file);
 
@@ -94,9 +104,12 @@ const AppContent = ({
       });
 
       const data = await response.json();
+      clearInterval(timer);
+      setProgress(100);
+
       if (response.ok) {
+        // ...existing result extraction...
         const content = data.choices?.[0]?.message?.content || '识别失败';
-        // 自动识别语言
         let lang = 'javascript';
         const langMatch = content.match(/```(\w+)/);
         if (langMatch && langMatch[1]) {
@@ -104,11 +117,9 @@ const AppContent = ({
         }
         setLanguage(lang);
 
-        // 提取代码块
         const codeMatch = content.match(/```(\w+)?\s*([\s\S]*?)```/);
         setCodeBlock(codeMatch ? codeMatch[2] : '');
 
-        // 提取报告部分
         const reportMatch = content.replace(/```[\s\S]*?```/, '').trim();
         setReport(reportMatch);
         setOcrResult(content);
@@ -120,6 +131,7 @@ const AppContent = ({
       alert(`OCR处理失败: ${error.message}`);
     } finally {
       setIsProcessing(false);
+      setTimeout(() => setProgress(0), 800); // 识别结束后自动隐藏进度条
     }
   };
 
@@ -307,7 +319,14 @@ const AppContent = ({
       <div style={{ maxWidth: '896px', margin: '0 auto', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', padding: '24px' }}>
         <h1 style={{ fontSize: '30px', fontWeight: 'bold', color: '#1f2937', marginBottom: '24px' }}>代码OCR识别工具</h1>
         {/* 文件上传区域 */}
-        <UploadImage files={files} setFiles={setFiles} getRootProps={getRootProps} getInputProps={getInputProps} />
+        <UploadImage
+          files={files}
+          setFiles={setFiles}
+          getRootProps={getRootProps}
+          getInputProps={getInputProps}
+          isProcessing={isProcessing}
+          progress={progress}
+        />
         {/* OCR按钮 */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '32px' }}>
           <button
