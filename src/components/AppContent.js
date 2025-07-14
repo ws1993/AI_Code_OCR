@@ -255,6 +255,7 @@ const AppContent = ({
           languageSearch={languageSearch}
           setLanguageSearch={setLanguageSearch}
           setCodeBlock={setCodeBlock}
+          ocrImage={files[0]} // 这里要传递图片文件或URL
         />
       </div>
     </div>
