@@ -10,13 +10,19 @@ const validateConfig = async ({ apiKey, baseUrl, model }) => {
         'Authorization': `Bearer ${apiKey}`
       }
     });
-    if (response.ok) {
-      alert('配置验证成功');
-      return true;
-    } else {
+    if (!response.ok) {
       alert('配置验证失败，请检查API Key和Base URL');
       return false;
     }
+    const data = await response.json();
+    // 检查模型是否存在
+    const models = data.data?.map(item => item.id) || [];
+    if (!models.includes(model)) {
+      alert(`模型 "${model}" 不存在或无权限，请检查模型名称`);
+      return false;
+    }
+    alert('配置验证成功');
+    return true;
   } catch (error) {
     alert('配置验证异常: ' + error.message);
     return false;
