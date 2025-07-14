@@ -1,4 +1,3 @@
-import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Select } from 'antd';
 import Editor from 'react-simple-code-editor';
@@ -11,8 +10,6 @@ const OcrResult = ({
   LANGUAGE_OPTIONS,
   formatCode,
   highlightCode,
-  languageSearch,
-  setLanguageSearch,
   setCodeBlock // 补充此参数
 }) => (
   <div style={{ marginBottom: '32px' }}>

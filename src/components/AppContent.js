@@ -1,6 +1,5 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import Editor from 'react-simple-code-editor';
 import { highlight, languages } from 'prismjs/components/prism-core';
 import 'prismjs/components/prism-clike';
 import 'prismjs/components/prism-javascript';
@@ -8,9 +7,7 @@ import 'prismjs/components/prism-python';
 import 'prismjs/components/prism-java';
 import 'prismjs/components/prism-typescript';
 import 'prismjs/themes/prism.css';
-import ReactMarkdown from 'react-markdown';
 import ConfigModal from './ConfigModal';
-import { Select } from 'antd';
 import 'antd/dist/reset.css'; // Ant Design v5推荐用reset.css
 import UploadImage from './UploadImage';
 import OcrResult from './OcrResult';
@@ -268,11 +265,6 @@ const AppContent = ({
       return code;
     }
   };
-
-  // 过滤语言选项
-  const filteredLanguages = LANGUAGE_OPTIONS.filter(lang =>
-    lang.toLowerCase().includes(languageSearch.toLowerCase())
-  );
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6', padding: '32px 16px', position: 'relative' }}>

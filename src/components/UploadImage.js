@@ -1,5 +1,3 @@
-import React from 'react';
-
 const ProgressBar = ({ percent }) => (
   <div style={{ width: '100%', background: '#e5e7eb', borderRadius: '6px', height: '8px', marginTop: '10px' }}>
     <div
