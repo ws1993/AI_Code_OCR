@@ -14,7 +14,14 @@ const ProgressBar = ({ percent }) => (
 
 const UploadImage = ({ files, setFiles, getRootProps, getInputProps, isProcessing, progress = 0 }) => (
   <div style={{ marginBottom: '32px' }}>
-    <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#374151', marginBottom: '12px' }}>上传图片</h2>
+    <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style={{ marginRight: 8 }}>
+        <rect x="3" y="3" width="18" height="18" rx="4" fill="#6366f1" />
+        <path d="M8 15l4-4 4 4" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="9" cy="9" r="2" fill="#fff" />
+      </svg>
+      <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#374151', margin: 0 }}>上传图片</h2>
+    </div>
     <div {...getRootProps()} style={{ border: '2px dashed #d1d5db', borderRadius: '8px', padding: '24px', textAlign: 'center', cursor: 'pointer', backgroundColor: '#f9fafb' }}>
       <input {...getInputProps()} />
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -46,7 +53,7 @@ const UploadImage = ({ files, setFiles, getRootProps, getInputProps, isProcessin
           title="删除图片"
         >
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none">
-            <path d="M4 4L12 12M12 4L4 12" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+            <path d="M4 4L12 12M12 4L4 12" stroke="white" strokeWidth="2" strokeLinecap="round" />
           </svg>
         </div>
       </div>

@@ -85,6 +85,23 @@ const ConfigModal = ({
                         />
                     </div>
                 </div>
+
+                <button
+                    onClick={async () => await validateConfig()}
+                    style={{
+                        margin: '16px 0',
+                        width: '100%',
+                        padding: '8px 16px',
+                        backgroundColor: '#059669',
+                        color: 'white',
+                        borderRadius: '6px',
+                        border: 'none',
+                        cursor: 'pointer',
+                    }}
+                >
+                    验证配置
+                </button>
+
                 <div style={{ marginTop: '16px', position: 'relative' }}>
                     <label style={{ display: 'block', color: '#374151', fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>
                         提示词 (Markdown格式)
@@ -115,20 +132,7 @@ const ConfigModal = ({
                         rows="10"
                     />
                 </div>
-                <button
-                    onClick={async () => await validateConfig()}
-                    style={{
-                        marginTop: '16px',
-                        padding: '8px 16px',
-                        backgroundColor: '#059669',
-                        color: 'white',
-                        borderRadius: '6px',
-                        border: 'none',
-                        cursor: 'pointer'
-                    }}
-                >
-                    验证配置
-                </button>
+
             </div>
         </div>
     );

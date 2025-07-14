@@ -130,49 +130,89 @@ const AppContent = ({
   };
 
   return (
-    <div style={{ minHeight: '100vh', backgroundColor: '#f3f4f6', padding: '32px 16px', position: 'relative' }}>
-      {/* 右上角齿轮图标入口 */}
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #f3f4f6 60%, #e0e7ff 100%)',
+      padding: '32px 16px',
+      position: 'relative'
+    }}>
       <div style={{
-        position: 'absolute',
-        top: 32,
-        right: 32,
-        zIndex: 100,
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center'
-      }}
-        onClick={() => setShowConfig(true)}
-        title="配置"
-      >
-        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#374151" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="3" />
-          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.09a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-        </svg>
-        <span style={{
-          marginLeft: 8,
-          color: '#374151',
-          fontSize: 16,
-          fontWeight: 500,
-          userSelect: 'none'
-        }}>配置</span>
-      </div>
-      {/* 配置弹窗 */}
-      <ConfigModal
-        visible={showConfig}
-        onClose={() => setShowConfig(false)}
-        baseUrl={baseUrl}
-        setBaseUrl={setBaseUrl}
-        apiKey={apiKey}
-        setApiKey={setApiKey}
-        model={model}
-        setModel={setModel}
-        prompt={prompt}
-        setPrompt={setPrompt}
-        validateConfig={() => validateConfig({ apiKey, baseUrl, model })}
-        DEFAULT_PROMPT={DEFAULT_PROMPT}
-      />
-      <div style={{ maxWidth: '896px', margin: '0 auto', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)', padding: '24px' }}>
-        <h1 style={{ fontSize: '30px', fontWeight: 'bold', color: '#1f2937', marginBottom: '24px' }}>代码OCR识别工具</h1>
+        maxWidth: '896px',
+        margin: '0 auto',
+        background: 'linear-gradient(120deg, #fff 80%, #f0fdf4 100%)',
+        borderRadius: '16px',
+        boxShadow: '0 6px 24px -4px rgba(60, 80, 180, 0.10)',
+        padding: '32px 28px 28px 28px'
+      }}>
+        {/* 顶部标题与配置入口 */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '28px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            {/* 标题前图标 */}
+             <svg width="38" height="38" viewBox="0 0 38 38" fill="none" style={{ marginRight: 12 }}>
+              <rect x="2" y="2" width="34" height="34" rx="8" fill="#22d3ee"/>
+              <path d="M12 19h14M19 12v14" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/>
+              <rect x="10" y="10" width="18" height="18" rx="4" stroke="#fff" strokeWidth="2"/>
+            </svg>
+            <h1 style={{
+              fontSize: '32px',
+              fontWeight: 'bold',
+              color: '#1e293b',
+              letterSpacing: '1px',
+              background: 'linear-gradient(90deg, #2563eb 60%, #059669 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              margin: 0
+            }}>代码OCR识别工具</h1>
+          </div>
+          {/* 配置入口（右侧） */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              cursor: 'pointer',
+              padding: '6px 16px',
+              borderRadius: '8px',
+              background: '#eef2ff',
+              boxShadow: '0 2px 8px rgba(60,80,180,0.04)',
+              transition: 'background 0.2s',
+              border: '1px solid #c7d2fe'
+            }}
+            onClick={() => setShowConfig(true)}
+            title="配置"
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" />
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.09a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+            </svg>
+            <span style={{
+              marginLeft: 8,
+              color: '#6366f1',
+              fontSize: 17,
+              fontWeight: 500,
+              userSelect: 'none'
+            }}>配置</span>
+          </div>
+        </div>
+        {/* 配置弹窗 */}
+        <ConfigModal
+          visible={showConfig}
+          onClose={() => setShowConfig(false)}
+          baseUrl={baseUrl}
+          setBaseUrl={setBaseUrl}
+          apiKey={apiKey}
+          setApiKey={setApiKey}
+          model={model}
+          setModel={setModel}
+          prompt={prompt}
+          setPrompt={setPrompt}
+          validateConfig={() => validateConfig({ apiKey, baseUrl, model })}
+          DEFAULT_PROMPT={DEFAULT_PROMPT}
+        />
         {/* 文件上传区域 */}
         <UploadImage
           files={files}
@@ -188,19 +228,21 @@ const AppContent = ({
             onClick={handleOcrClick}
             disabled={files.length === 0 || isProcessing}
             style={{
-              padding: '12px 24px',
-              borderRadius: '8px',
-              fontWeight: '500',
-              backgroundColor: files.length === 0 || isProcessing ? '#9ca3af' : '#2563eb',
-              color: 'white',
+              padding: '13px 28px',
+              borderRadius: '10px',
+              fontWeight: '600',
+              fontSize: '17px',
+              background: files.length === 0 || isProcessing ? '#d1d5db' : '#059669',
+              color: files.length === 0 || isProcessing ? '#6b7280' : '#fff',
               border: 'none',
-              cursor: files.length === 0 || isProcessing ? 'not-allowed' : 'pointer'
+              boxShadow: files.length === 0 || isProcessing ? 'none' : '0 2px 8px rgba(60,80,180,0.08)',
+              cursor: files.length === 0 || isProcessing ? 'not-allowed' : 'pointer',
+              transition: 'background 0.2s'
             }}
           >
             {isProcessing ? '正在识别...' : '识别代码'}
           </button>
         </div>
-
         {/* 识别结果分区 */}
         <OcrResult
           report={report}
