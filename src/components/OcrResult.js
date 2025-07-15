@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { Select, message } from 'antd';
 import Editor from 'react-simple-code-editor';
@@ -19,9 +19,37 @@ const OcrResult = ({
   const [imgOffset, setImgOffset] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+  
+  // 添加 ref
+  const imageContainerRef = useRef(null);
 
   const MIN_SCALE = 0.2;
   const MAX_SCALE = 5;
+
+  // 使用 useEffect 添加非被动的事件监听器
+  useEffect(() => {
+    const container = imageContainerRef.current;
+    if (!container) return;
+
+    const handleWheelCapture = (e) => {
+      // 检查是否在图片容器内
+      if (container.contains(e.target)) {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        let newScale = imgScale + (e.deltaY < 0 ? 0.5 : -0.5);
+        newScale = Math.max(MIN_SCALE, Math.min(newScale, MAX_SCALE));
+        setImgScale(newScale);
+      }
+    };
+
+    // 添加非被动的事件监听器
+    container.addEventListener('wheel', handleWheelCapture, { passive: false });
+
+    return () => {
+      container.removeEventListener('wheel', handleWheelCapture);
+    };
+  }, [imgScale, MIN_SCALE, MAX_SCALE]);
 
   const handleWheel = (e) => {
     e.preventDefault();
@@ -200,6 +228,7 @@ const OcrResult = ({
         // 对比模式：左图右码
         <div style={{ display: 'flex', gap: '24px' }}>
           <div
+            ref={imageContainerRef}
             style={{
               flex: 1,
               border: '1px solid #d1d5db',
