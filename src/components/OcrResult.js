@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Select } from 'antd';
+import { Select, message } from 'antd';
 import Editor from 'react-simple-code-editor';
 
 const OcrResult = ({
@@ -54,6 +54,18 @@ const OcrResult = ({
 
   const handleMouseUp = () => {
     setDragging(false);
+  };
+
+  const handleCopyCode = () => {
+    if (codeBlock) {
+      navigator.clipboard.writeText(codeBlock)
+        .then(() => {
+          message.success('代码已复制到剪贴板');
+        })
+        .catch(() => {
+          message.error('复制失败，请重试');
+        });
+    }
   };
 
   return (
@@ -112,6 +124,28 @@ const OcrResult = ({
               <path d="M15 8l-2 2m0 0l2 2m-2-2v6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
             <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#374151', margin: 0 }}>识别代码</h2>
+            <button
+              onClick={handleCopyCode}
+              style={{
+                marginLeft: 'auto',
+                padding: '6px 12px',
+                background: '#e5e7eb',
+                borderRadius: '6px',
+                border: 'none',
+                cursor: 'pointer',
+                color: '#6366f1',
+                display: 'flex',
+                alignItems: 'center'
+              }}
+              title="复制代码"
+            >
+              {/* 复制图标 */}
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style={{ marginRight: 4 }}>
+                <rect x="4" y="4" width="10" height="10" rx="2" stroke="currentColor" strokeWidth="2"/>
+                <rect x="7" y="1" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1"/>
+              </svg>
+              复制
+            </button>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', marginBottom: '12px' }}>
             <span style={{ marginRight: '12px', color: '#4b5563' }}>选择语言:</span>
