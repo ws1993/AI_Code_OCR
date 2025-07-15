@@ -20,11 +20,22 @@ const OcrResult = ({
   const [dragging, setDragging] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
 
+  const MIN_SCALE = 0.2;
+  const MAX_SCALE = 5;
+
   const handleWheel = (e) => {
     e.preventDefault();
-    let newScale = imgScale + (e.deltaY < 0 ? 0.1 : -0.1);
-    newScale = Math.max(0.2, Math.min(newScale, 5));
+    e.stopPropagation(); // 阻止事件冒泡到页面
+    let newScale = imgScale + (e.deltaY < 0 ? 0.5 : -0.5);
+    newScale = Math.max(MIN_SCALE, Math.min(newScale, MAX_SCALE));
     setImgScale(newScale);
+  };
+
+  const handleZoomIn = () => {
+    if (imgScale < MAX_SCALE) setImgScale(prev => Math.min(prev + 0.5, MAX_SCALE));
+  };
+  const handleZoomOut = () => {
+    if (imgScale > MIN_SCALE) setImgScale(prev => Math.max(prev - 0.5, MIN_SCALE));
   };
 
   const handleMouseDown = (e) => {
@@ -175,6 +186,61 @@ const OcrResult = ({
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
           >
+            {/* 缩放按钮 */}
+            <div style={{
+              position: 'absolute',
+              top: 12,
+              right: 16,
+              display: 'flex',
+              gap: 8,
+              zIndex: 2
+            }}>
+              <button
+                onClick={handleZoomOut}
+                disabled={imgScale <= MIN_SCALE}
+                style={{
+                  background: imgScale <= MIN_SCALE ? '#e5e7eb' : '#fff',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '50%',
+                  width: 32,
+                  height: 32,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: imgScale <= MIN_SCALE ? 'not-allowed' : 'pointer',
+                  color: imgScale <= MIN_SCALE ? '#9ca3af' : '#6366f1'
+                }}
+                title="缩小"
+              >
+                {/* 缩小图标 */}
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <rect x="3" y="8" width="12" height="2" rx="1" fill="currentColor"/>
+                </svg>
+              </button>
+              <button
+                onClick={handleZoomIn}
+                disabled={imgScale >= MAX_SCALE}
+                style={{
+                  background: imgScale >= MAX_SCALE ? '#e5e7eb' : '#fff',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '50%',
+                  width: 32,
+                  height: 32,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: imgScale >= MAX_SCALE ? 'not-allowed' : 'pointer',
+                  color: imgScale >= MAX_SCALE ? '#9ca3af' : '#6366f1'
+                }}
+                title="放大"
+              >
+                {/* 放大图标 */}
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+                  <rect x="3" y="8" width="12" height="2" rx="1" fill="currentColor"/>
+                  <rect x="8" y="3" width="2" height="12" rx="1" fill="currentColor"/>
+                </svg>
+              </button>
+            </div>
             {ocrImage ? (
               <img
                 src={typeof ocrImage === 'string' ? ocrImage : URL.createObjectURL(ocrImage)}
