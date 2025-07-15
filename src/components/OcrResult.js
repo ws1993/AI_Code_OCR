@@ -15,6 +15,35 @@ const OcrResult = ({
   ocrImage // 新增：传入图片 File 或 URL
 }) => {
   const [compareMode, setCompareMode] = useState(false);
+  const [imgScale, setImgScale] = useState(1);
+  const [imgOffset, setImgOffset] = useState({ x: 0, y: 0 });
+  const [dragging, setDragging] = useState(false);
+  const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+
+  const handleWheel = (e) => {
+    e.preventDefault();
+    let newScale = imgScale + (e.deltaY < 0 ? 0.1 : -0.1);
+    newScale = Math.max(0.2, Math.min(newScale, 5));
+    setImgScale(newScale);
+  };
+
+  const handleMouseDown = (e) => {
+    setDragging(true);
+    setStartPos({ x: e.clientX - imgOffset.x, y: e.clientY - imgOffset.y });
+  };
+
+  const handleMouseMove = (e) => {
+    if (dragging) {
+      setImgOffset({
+        x: e.clientX - startPos.x,
+        y: e.clientY - startPos.y
+      });
+    }
+  };
+
+  const handleMouseUp = () => {
+    setDragging(false);
+  };
 
   return (
     <div style={{ marginBottom: '32px' }}>
@@ -82,21 +111,41 @@ const OcrResult = ({
       ) : (
         // 对比模式：左图右码
         <div style={{ display: 'flex', gap: '24px' }}>
-          <div style={{
-            flex: 1,
-            border: '1px solid #d1d5db',
-            borderRadius: '8px',
-            background: '#f9fafb',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: '200px'
-          }}>
+          <div
+            style={{
+              flex: 1,
+              border: '1px solid #d1d5db',
+              borderRadius: '8px',
+              background: '#f9fafb',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '350px',
+              height: '350px',
+              overflow: 'hidden',
+              position: 'relative',
+              userSelect: 'none'
+            }}
+            onWheel={handleWheel}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+          >
             {ocrImage ? (
               <img
                 src={typeof ocrImage === 'string' ? ocrImage : URL.createObjectURL(ocrImage)}
                 alt="OCR原图"
-                style={{ maxWidth: '100%', maxHeight: '350px', borderRadius: '8px' }}
+                style={{
+                  transform: `scale(${imgScale}) translate(${imgOffset.x / imgScale}px, ${imgOffset.y / imgScale}px)`,
+                  transition: dragging ? 'none' : 'transform 0.2s',
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  borderRadius: '8px',
+                  cursor: dragging ? 'grabbing' : 'grab',
+                  background: '#fff'
+                }}
+                draggable={false}
               />
             ) : (
               <span style={{ color: '#9ca3af' }}>暂无图片</span>
