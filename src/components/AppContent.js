@@ -170,32 +170,55 @@ const AppContent = ({
             }}>代码OCR识别工具</h1>
           </div>
           {/* 配置入口（右侧） */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              cursor: 'pointer',
-              padding: '6px 16px',
-              borderRadius: '8px',
-              background: '#eef2ff',
-              boxShadow: '0 2px 8px rgba(60,80,180,0.04)',
-              transition: 'background 0.2s',
-              border: '1px solid #c7d2fe'
-            }}
-            onClick={() => setShowConfig(true)}
-            title="配置"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.09a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
-            <span style={{
-              marginLeft: 8,
-              color: '#6366f1',
-              fontSize: 17,
-              fontWeight: 500,
-              userSelect: 'none'
-            }}>配置</span>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            {/* Github 图标按钮 */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                cursor: 'pointer',
+                marginRight: '14px',
+                padding: '6px',
+                borderRadius: '6px',
+                transition: 'background 0.2s'
+              }}
+              title="GitHub 仓库"
+              onClick={() => window.open('https://github.com/ws1993/AI_Code_OCR', '_blank')}
+            >
+              <svg height="24" width="24" viewBox="0 0 24 24" fill="none">
+                <path
+                  d="M12 2C6.48 2 2 6.58 2 12.26c0 4.48 2.87 8.28 6.84 9.63.5.09.68-.22.68-.48 0-.24-.01-.87-.01-1.7-2.78.62-3.37-1.36-3.37-1.36-.45-1.18-1.1-1.5-1.1-1.5-.9-.63.07-.62.07-.62 1 .07 1.53 1.05 1.53 1.05.89 1.56 2.34 1.11 2.91.85.09-.66.35-1.11.63-1.37-2.22-.26-4.56-1.14-4.56-5.07 0-1.12.39-2.03 1.03-2.75-.1-.26-.45-1.3.1-2.7 0 0 .84-.28 2.75 1.05A9.38 9.38 0 0112 6.84c.85.004 1.71.12 2.51.34 1.91-1.33 2.75-1.05 2.75-1.05.55 1.4.2 2.44.1 2.7.64.72 1.03 1.63 1.03 2.75 0 3.94-2.34 4.81-4.57 5.07.36.32.68.94.68 1.9 0 1.37-.01 2.47-.01 2.8 0 .26.18.57.69.48A10.01 10.01 0 0022 12.26C22 6.58 17.52 2 12 2z"
+                  fill="#6366f1"
+                />
+              </svg>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                cursor: 'pointer',
+                padding: '6px 16px',
+                borderRadius: '8px',
+                background: '#eef2ff',
+                boxShadow: '0 2px 8px rgba(60,80,180,0.04)',
+                transition: 'background 0.2s',
+                border: '1px solid #c7d2fe'
+              }}
+              onClick={() => setShowConfig(true)}
+              title="配置"
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.09a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.09a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.09a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+              <span style={{
+                marginLeft: 8,
+                color: '#6366f1',
+                fontSize: 17,
+                fontWeight: 500,
+                userSelect: 'none'
+              }}>配置</span>
+            </div>
           </div>
         </div>
         {/* 配置弹窗 */}
