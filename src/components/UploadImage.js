@@ -30,13 +30,29 @@ const UploadImage = ({ files, setFiles, getRootProps, getInputProps, isProcessin
         </svg>
         <h2 style={{ fontSize: '20px', fontWeight: '600', color: '#374151', margin: 0 }}>上传图片</h2>
       </div>
-      <div {...getRootProps()} style={{ border: '2px dashed #d1d5db', borderRadius: '8px', padding: '24px', textAlign: 'center', cursor: 'pointer', backgroundColor: '#f9fafb' }}>
+      <div
+        {...getRootProps()}
+        style={{ border: '2px dashed #d1d5db', borderRadius: '8px', padding: '24px', textAlign: 'center', cursor: 'pointer', backgroundColor: '#f9fafb' }}
+        onPaste={e => {
+          const items = e.clipboardData && e.clipboardData.items;
+          if (items) {
+            for (let i = 0; i < items.length; i++) {
+              if (items[i].type.indexOf('image') !== -1) {
+                const file = items[i].getAsFile();
+                if (file) {
+                  setFiles([file]);
+                }
+              }
+            }
+          }
+        }}
+      >
         <input {...getInputProps()} />
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           <svg style={{ height: '48px', width: '48px', color: '#9ca3af', marginBottom: '8px' }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
           </svg>
-          <p style={{ color: '#4b5563' }}>拖拽图片到这里，或者点击选择文件</p>
+          <p style={{ color: '#4b5563' }}>拖拽图片到这里，或者点击选择文件或 <b>Ctrl+V 粘贴图片</b></p>
           <p style={{ fontSize: '14px', color: '#6b7280', marginTop: '4px' }}>(支持JPG, PNG格式)</p>
         </div>
       </div>
